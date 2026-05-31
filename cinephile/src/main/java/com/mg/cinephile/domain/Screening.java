@@ -29,6 +29,8 @@ public class Screening {
 
     private String format;
 
+    private String source;
+
     public Screening() {
     }
 
@@ -53,4 +55,7 @@ public class Screening {
 
     public String getFormat() { return format; }
     public void setFormat(String format) { this.format = format; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

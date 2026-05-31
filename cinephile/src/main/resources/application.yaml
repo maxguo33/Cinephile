@@ -19,3 +19,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+amc:
+  api:
+    key: ${AMC_API_KEY:}
+    base-url: https://api.amctheatres.com
