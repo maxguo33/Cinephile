@@ -2,12 +2,7 @@ package com.mg.cinephile.controller;
 
 import com.mg.cinephile.dto.ScreeningDto;
 import com.mg.cinephile.service.ScreeningService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -38,4 +33,13 @@ public class ScreeningController {
     public ScreeningDto createScreening(@RequestBody ScreeningDto dto) {
         return screeningService.createScreening(dto);
     }
+
+    @GetMapping("/near")
+    public List<ScreeningDto> findNear(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "10") double radiusKm) {
+        return screeningService.findScreeningsNear(lat, lng, radiusKm);
+    }
+
 }

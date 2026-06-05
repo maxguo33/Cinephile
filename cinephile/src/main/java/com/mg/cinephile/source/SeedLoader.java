@@ -13,6 +13,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class SeedLoader implements ApplicationRunner {
@@ -68,23 +69,35 @@ public class SeedLoader implements ApplicationRunner {
         log.info("  fetched {} screenings", screenings.size());
 
         for (Screening screening : screenings) {
-            // Persist the theater first (if it isn't already)
+            // Reuse existing theater if we've already saved one with this external id
             Theater theater = screening.getTheater();
-            if (theater.getId() == null) {
+            if (theater.getExternalId() != null) {
+                Optional<Theater> existing = theaterRepository.findByExternalId(theater.getExternalId());
+                if (existing.isPresent()) {
+                    theater = existing.get();
+                } else {
+                    theater = theaterRepository.save(theater);
+                }
+            } else if (theater.getId() == null) {
                 theater = theaterRepository.save(theater);
-                screening.setTheater(theater);
             }
+            screening.setTheater(theater);
 
-            // Then the movie
+            // Reuse existing movie if we've already saved one with this title
             Movie movie = screening.getMovie();
-            if (movie.getId() == null) {
+            if (movie.getTitle() != null) {
+                Optional<Movie> existing = movieRepository.findByTitle(movie.getTitle());
+                if (existing.isPresent()) {
+                    movie = existing.get();
+                } else {
+                    movie = movieRepository.save(movie);
+                }
+            } else if (movie.getId() == null) {
                 movie = movieRepository.save(movie);
-                screening.setMovie(movie);
             }
+            screening.setMovie(movie);
 
-            // Mark which source this came from
-            screening.se tSource(source.getName());
-
+            screening.setSource(source.getName());
             screeningRepository.save(screening);
         }
     }

@@ -9,6 +9,7 @@ public class ScreeningDto {
     private TheaterDto theater;
     private LocalDateTime startTime;
     private String format;
+    private double distanceKm;
 
     public ScreeningDto() {
     }
@@ -36,4 +37,7 @@ public class ScreeningDto {
 
     public String getFormat() { return format; }
     public void setFormat(String format) { this.format = format; }
+
+    public Double getDistanceKm() { return distanceKm; }                 // NEW
+    public void setDistanceKm(Double distanceKm) { this.distanceKm = distanceKm; }
 }

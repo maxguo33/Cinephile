@@ -9,8 +9,12 @@ import com.mg.cinephile.dto.TheaterDto;
 import com.mg.cinephile.repository.MovieRepository;
 import com.mg.cinephile.repository.ScreeningRepository;
 import com.mg.cinephile.repository.TheaterRepository;
+import com.mg.cinephile.util.DistanceUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -26,6 +30,43 @@ public class ScreeningService {
         this.screeningRepository = screeningRepository;
         this.movieRepository = movieRepository;
         this.theaterRepository = theaterRepository;
+    }
+
+    /**
+     * Find special screenings near a geographic point.
+     *
+     * Loads all theaters, computes each theater's distance from the
+     * given point, keeps those within the radius, fetches their
+     * screenings, and returns DTOs sorted nearest-first.
+     */
+    @Transactional(readOnly = true)
+    public List<ScreeningDto> findScreeningsNear(double lat, double lng, double radiusKm) {
+        List<Theater> allTheaters = theaterRepository.findAll();
+
+        // Step 1 — filter theaters by distance
+        List<Theater> nearby = new ArrayList<>();
+        for (Theater t : allTheaters) {
+            double distance = DistanceUtil.haversineKm(lat, lng, t.getLatitude(), t.getLongitude());
+            if (distance <= radiusKm) {
+                nearby.add(t);
+            }
+        }
+
+        // Step 2 — collect all screenings at those theaters, with distance
+        List<ScreeningDto> results = new ArrayList<>();
+        for (Theater t : nearby) {
+            double distance = DistanceUtil.haversineKm(lat, lng, t.getLatitude(), t.getLongitude());
+            List<Screening> theaterScreenings = screeningRepository.findByTheaterId(t.getId());
+            for (Screening s : theaterScreenings) {
+                ScreeningDto dto = toDto(s);
+                dto.setDistanceKm(distance);
+                results.add(dto);
+            }
+        }
+
+        // Step 3 — sort nearest first
+        results.sort(Comparator.comparing(ScreeningDto::getDistanceKm));
+        return results;
     }
 
     // --- read all screenings ---

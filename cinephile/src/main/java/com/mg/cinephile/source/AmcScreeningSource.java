@@ -75,7 +75,9 @@ public class AmcScreeningSource implements ScreeningSource {
     private List<Theater> fetchTheaters() {
         JsonNode response = webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/v2/theatres")
+                        .path("/v2/locations")
+                        .queryParam("latitude", 37.33)
+                        .queryParam("longitude", -121.89)
                         .queryParam("page-size", THEATER_PAGE_SIZE)
                         .build())
                 .header("X-AMC-Vendor-Key", apiKey)
@@ -86,17 +88,20 @@ public class AmcScreeningSource implements ScreeningSource {
         List<Theater> result = new ArrayList<>();
         if (response == null) return result;
 
-        JsonNode theatersNode = response.path("_embedded").path("theatres");
-        for (JsonNode node : theatersNode) {
+        JsonNode locations = response.path("_embedded").path("locations");
+        for (JsonNode locationNode : locations) {
+            JsonNode theatreNode = locationNode.path("_embedded").path("theatre");
+
             Theater t = new Theater();
-            t.setName(node.path("name").asText());
-            t.setCity(node.path("city").asText(""));
-            t.setLatitude(node.path("latitude").asDouble(0));
-            t.setLongitude(node.path("longitude").asDouble(0));
-            // Store AMC's theater id in a transient way via a hack: we'll
-            // attach it to the address field for now so the showtimes
-            // call can find it. Cleaner approach later.
-            t.setExternalId(String.valueOf(node.path("id").asLong()));
+            t.setName(theatreNode.path("name").asText());
+
+            // The detailed address is nested at .location inside the theatre
+            JsonNode loc = theatreNode.path("location");
+            t.setCity(loc.path("city").asText(""));
+            t.setLatitude(loc.path("latitude").asDouble(0));
+            t.setLongitude(loc.path("longitude").asDouble(0));
+
+            t.setExternalId(String.valueOf(theatreNode.path("id").asLong()));
             result.add(t);
         }
         return result;
