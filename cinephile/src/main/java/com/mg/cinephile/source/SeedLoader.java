@@ -1,5 +1,6 @@
 package com.mg.cinephile.source;
 
+import com.mg.cinephile.classifier.Classifier;
 import com.mg.cinephile.domain.Movie;
 import com.mg.cinephile.domain.Screening;
 import com.mg.cinephile.domain.Theater;
@@ -24,51 +25,68 @@ public class SeedLoader implements ApplicationRunner {
     private final TheaterRepository theaterRepository;
     private final MovieRepository movieRepository;
     private final ScreeningRepository screeningRepository;
+    private final Classifier classifier;
 
     public SeedLoader(List<ScreeningSource> sources,
                       TheaterRepository theaterRepository,
                       MovieRepository movieRepository,
-                      ScreeningRepository screeningRepository) {
+                      ScreeningRepository screeningRepository,
+                      Classifier classifier) {
         this.sources = sources;
         this.theaterRepository = theaterRepository;
         this.movieRepository = movieRepository;
         this.screeningRepository = screeningRepository;
+        this.classifier = classifier;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        // Don't reseed if data already exists
-        if (screeningRepository.count() > 0) {
-            log.info("Data already present, skipping seed.");
-            return;
-        }
-
         log.info("Found {} screening source(s): {}",
                 sources.size(),
                 sources.stream().map(ScreeningSource::getName).toList());
 
+        int totalAdded = 0;
+        int totalSkipped = 0;
+
         for (ScreeningSource source : sources) {
             try {
-                loadFromSource(source);
+                int[] counts = loadFromSource(source);
+                totalAdded += counts[0];
+                totalSkipped += counts[1];
             } catch (Exception e) {
                 log.error("Failed to load from source '{}': {}",
                         source.getName(), e.getMessage(), e);
             }
         }
 
-        log.info("Seed complete. Theaters: {}, Movies: {}, Screenings: {}",
+        log.info("Ingestion complete. Added: {}, Skipped (duplicate): {}. Totals — Theaters: {}, Movies: {}, Screenings: {}",
+                totalAdded, totalSkipped,
                 theaterRepository.count(),
                 movieRepository.count(),
                 screeningRepository.count());
     }
 
-    private void loadFromSource(ScreeningSource source) {
+    /**
+     * @return [added, skipped]
+     */
+    private int[] loadFromSource(ScreeningSource source) {
         log.info("Loading from source: {}", source.getName());
 
         List<Screening> screenings = source.fetchScreenings();
         log.info("  fetched {} screenings", screenings.size());
 
+        int added = 0;
+        int skipped = 0;
+
         for (Screening screening : screenings) {
+            // Skip if we already have this screening (by externalId)
+            if (screening.getExternalId() != null) {
+                if (screeningRepository.findByExternalId(screening.getExternalId()).isPresent()) {
+                    skipped++;
+                    continue;
+                }
+            }
+
             // Reuse existing theater if we've already saved one with this external id
             Theater theater = screening.getTheater();
             if (theater.getExternalId() != null) {
@@ -98,7 +116,12 @@ public class SeedLoader implements ApplicationRunner {
             screening.setMovie(movie);
 
             screening.setSource(source.getName());
+            screening.setSpecialCategory(classifier.classify(screening));
             screeningRepository.save(screening);
+            added++;
         }
+
+        log.info("  added {}, skipped {} (duplicates)", added, skipped);
+        return new int[]{added, skipped};
     }
 }

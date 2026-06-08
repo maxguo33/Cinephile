@@ -41,6 +41,10 @@ public class AmcScreeningSource implements ScreeningSource {
         return "amc";
     }
 
+    // How many days ahead to fetch showtimes for.
+// AMC typically publishes ~2 weeks out, sometimes more.
+    private static final int DAYS_AHEAD_TO_FETCH = 14;
+
     @Override
     public List<Screening> fetchScreenings() {
         if (apiKey == null || apiKey.isBlank()) {
@@ -52,19 +56,24 @@ public class AmcScreeningSource implements ScreeningSource {
         List<Theater> theaters = fetchTheaters();
         log.info("Got {} AMC theaters.", theaters.size());
 
-        // For each theater, fetch tomorrow's showtimes.
-        LocalDate date = LocalDate.now().plusDays(1);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.plusDays(DAYS_AHEAD_TO_FETCH);
+        log.info("Fetching showtimes from {} to {}", startDate, endDate);
+
         List<Screening> all = new ArrayList<>();
         for (Theater theater : theaters) {
-            try {
-                all.addAll(fetchShowtimesForTheater(theater, date));
-            } catch (Exception e) {
-                log.warn("Failed to fetch showtimes for theater {}: {}",
-                        theater.getName(), e.getMessage());
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                try {
+                    List<Screening> dayScreenings = fetchShowtimesForTheater(theater, date);
+                    all.addAll(dayScreenings);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch showtimes for theater {} on {}: {}",
+                            theater.getName(), date, e.getMessage());
+                }
             }
         }
 
-        log.info("Fetched {} AMC screenings.", all.size());
+        log.info("Fetched {} AMC screenings across {} days.", all.size(), DAYS_AHEAD_TO_FETCH + 1);
         return all;
     }
 
@@ -146,6 +155,7 @@ public class AmcScreeningSource implements ScreeningSource {
                     startTime,
                     "Standard"
             );
+            screening.setExternalId("amc-" + node.path("id").asLong());
             result.add(screening);
         }
         return result;

@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +32,11 @@ public class Screening {
     private String format;
 
     private String source;
+
+    private String externalId;
+
+    @Enumerated(EnumType.STRING)
+    private SpecialCategory specialCategory = SpecialCategory.REGULAR;
 
     public Screening() {
     }
@@ -58,4 +65,10 @@ public class Screening {
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
+
+    public String getExternalId() { return externalId; }
+    public void setExternalId(String externalId) { this.externalId = externalId; }
+
+    public SpecialCategory getSpecialCategory() { return specialCategory; }
+    public void setSpecialCategory(SpecialCategory specialCategory) { this.specialCategory = specialCategory; }
 }
