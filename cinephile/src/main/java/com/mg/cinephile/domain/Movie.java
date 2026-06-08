@@ -22,6 +22,13 @@ public class Movie {
 
     private Double imdbRating;
 
+    private Integer rtRating;
+
+    private String tmdbId;
+    private String imdbId;
+    private String posterUrl;
+    private String countryOfOrigin;
+
     public Movie() {
     }
 
@@ -46,4 +53,20 @@ public class Movie {
 
     public Double getImdbRating() { return imdbRating; }
     public void setImdbRating(Double imdbRating) { this.imdbRating = imdbRating; }
+
+    public Integer getRtRating() { return rtRating; }
+    public void setRtRating(Integer rtRating) { this.rtRating = rtRating; }
+
+    public String getTmdbId() { return tmdbId; }
+    public void setTmdbId(String tmdbId) { this.tmdbId = tmdbId; }
+
+    public String getImdbId() { return imdbId; }
+    public void setImdbId(String imdbId) { this.imdbId = imdbId; }
+
+    public String getPosterUrl() { return posterUrl; }
+    public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+
+    public String getCountryOfOrigin() { return countryOfOrigin; }
+    public void setCountryOfOrigin(String countryOfOrigin) { this.countryOfOrigin = countryOfOrigin; }
+
 }

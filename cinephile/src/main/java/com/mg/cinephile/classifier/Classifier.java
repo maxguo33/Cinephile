@@ -15,6 +15,8 @@ public class Classifier {
 
     private static final int ANNIVERSARY_MIN_AGE_YEARS = 20;
 
+    private static final String DOMESTIC_COUNTRY = "US";
+
     private static final int ANNIVERSARY_INTERVAL = 5;
 
     private static final Set<String> FESTIVAL_KEYWORDS = Set.of("festival", "fest");
@@ -47,6 +49,11 @@ public class Classifier {
             if (yearsOld >= REPERTORY_AGE_YEARS) {
                 return SpecialCategory.REPERTORY;
             }
+        }
+
+        String country = movie.getCountryOfOrigin();
+        if (country != null && !country.isBlank() && !DOMESTIC_COUNTRY.equalsIgnoreCase(country)) {
+            return SpecialCategory.INTERNATIONAL;
         }
 
         if (containsAny(text, SPECIAL_FORMAT_KEYWORDS)) {

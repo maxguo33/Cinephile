@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import com.mg.cinephile.source.OmdbClient;
+import com.mg.cinephile.source.TmdbClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,17 +28,23 @@ public class SeedLoader implements ApplicationRunner {
     private final MovieRepository movieRepository;
     private final ScreeningRepository screeningRepository;
     private final Classifier classifier;
+    private final TmdbClient tmdbClient;
+    private final OmdbClient omdbClient;
 
     public SeedLoader(List<ScreeningSource> sources,
                       TheaterRepository theaterRepository,
                       MovieRepository movieRepository,
                       ScreeningRepository screeningRepository,
-                      Classifier classifier) {
+                      Classifier classifier,
+                      TmdbClient tmdbClient,
+                      OmdbClient omdbClient) {
         this.sources = sources;
         this.theaterRepository = theaterRepository;
         this.movieRepository = movieRepository;
         this.screeningRepository = screeningRepository;
         this.classifier = classifier;
+        this.tmdbClient = tmdbClient;
+        this.omdbClient = omdbClient;
     }
 
     @Override
@@ -112,11 +120,13 @@ public class SeedLoader implements ApplicationRunner {
                 if (existing.isPresent()) {
                     movie = existing.get();
                 } else {
+                    enrichMovie(movie);                   // NEW
                     movie = movieRepository.save(movie);
                 }
             } else if (movie.getId() == null) {
                 movie = movieRepository.save(movie);
             }
+            screening.setMovie(movie);
             screening.setMovie(movie);
 
             screening.setSource(source.getName());
@@ -127,5 +137,39 @@ public class SeedLoader implements ApplicationRunner {
 
         log.info("  added {}, skipped {} (duplicates)", added, skipped);
         return new int[]{added, skipped};
+    }
+
+    /**
+     * Enrich a freshly-discovered movie with TMDB metadata + OMDb ratings.
+     * Modifies the movie in place. Silently does nothing if enrichment fails;
+     * the movie still saves with whatever fields it already had from the source.
+     */
+    private void enrichMovie(Movie movie) {
+        // Step 1 — TMDB for metadata (synopsis, poster, country, IMDb id)
+        Optional<TmdbClient.TmdbResult> tmdbResult = tmdbClient.enrich(movie.getTitle());
+        if (tmdbResult.isEmpty()) return;
+
+        TmdbClient.TmdbResult tmdb = tmdbResult.get();
+
+        // Don't overwrite values that may already exist; fill only blanks
+        if (tmdb.synopsis != null) movie.setSynopsis(tmdb.synopsis);
+        if (tmdb.posterUrl != null) movie.setPosterUrl(tmdb.posterUrl);
+        if (tmdb.countryOfOrigin != null) movie.setCountryOfOrigin(tmdb.countryOfOrigin);
+        if (tmdb.tmdbId != null) movie.setTmdbId(tmdb.tmdbId);
+        if (tmdb.imdbId != null) movie.setImdbId(tmdb.imdbId);
+        if (tmdb.releaseDate != null && movie.getReleaseDate() == null) {
+            // Only override release date if AMC didn't provide one
+            movie.setReleaseDate(tmdb.releaseDate);
+        }
+
+        // Step 2 — OMDb for ratings, only if we have an IMDb id from TMDB
+        if (tmdb.imdbId == null) return;
+
+        Optional<OmdbClient.OmdbResult> omdbResult = omdbClient.fetchRatings(tmdb.imdbId);
+        if (omdbResult.isEmpty()) return;
+
+        OmdbClient.OmdbResult omdb = omdbResult.get();
+        if (omdb.imdbRating != null) movie.setImdbRating(omdb.imdbRating);
+        if (omdb.rtRating != null) movie.setRtRating(omdb.rtRating);
     }
 }
