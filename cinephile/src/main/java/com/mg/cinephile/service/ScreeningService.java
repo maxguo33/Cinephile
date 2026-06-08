@@ -127,12 +127,14 @@ public class ScreeningService {
                 t.getLongitude()
         );
 
-        return new ScreeningDto(
+        ScreeningDto dto = new ScreeningDto(
                 screening.getId(),
                 movieDto,
                 theaterDto,
                 screening.getStartTime(),
                 screening.getFormat()
         );
+        dto.setSpecialCategory(screening.getSpecialCategory());
+        return dto;
     }
 }

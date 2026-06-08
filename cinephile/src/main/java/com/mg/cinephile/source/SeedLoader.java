@@ -41,6 +41,10 @@ public class SeedLoader implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        ingestAll();
+    }
+
+    public void ingestAll(){
         log.info("Found {} screening source(s): {}",
                 sources.size(),
                 sources.stream().map(ScreeningSource::getName).toList());

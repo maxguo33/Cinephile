@@ -1,5 +1,7 @@
 package com.mg.cinephile.dto;
 
+import com.mg.cinephile.domain.SpecialCategory;
+
 import java.time.LocalDateTime;
 
 public class ScreeningDto {
@@ -10,6 +12,7 @@ public class ScreeningDto {
     private LocalDateTime startTime;
     private String format;
     private double distanceKm;
+    private SpecialCategory specialCategory;
 
     public ScreeningDto() {
     }
@@ -40,4 +43,7 @@ public class ScreeningDto {
 
     public Double getDistanceKm() { return distanceKm; }                 // NEW
     public void setDistanceKm(Double distanceKm) { this.distanceKm = distanceKm; }
+
+    public SpecialCategory getSpecialCategory() { return specialCategory; }                    // NEW
+    public void setSpecialCategory(SpecialCategory specialCategory) { this.specialCategory = specialCategory; }   // NEW
 }
