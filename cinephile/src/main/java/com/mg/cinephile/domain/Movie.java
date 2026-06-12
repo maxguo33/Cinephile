@@ -1,9 +1,6 @@
 package com.mg.cinephile.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -18,6 +15,7 @@ public class Movie {
 
     private LocalDate releaseDate;
 
+    @Column(length = 2000)
     private String synopsis;
 
     private Double imdbRating;

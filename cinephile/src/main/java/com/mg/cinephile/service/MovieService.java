@@ -36,13 +36,19 @@ public class MovieService {
     }
 
     private MovieDto toDto(Movie movie) {
-        return new MovieDto(
+        MovieDto dto = new MovieDto(
                 movie.getId(),
                 movie.getTitle(),
                 movie.getReleaseDate(),
                 movie.getSynopsis(),
                 movie.getImdbRating()
         );
+        dto.setRtRating(movie.getRtRating());
+        dto.setPosterUrl(movie.getPosterUrl());
+        dto.setCountryOfOrigin(movie.getCountryOfOrigin());
+        dto.setTmdbId(movie.getTmdbId());
+        dto.setImdbId(movie.getImdbId());
+        return dto;
     }
 
     private Movie toEntity(MovieDto dto) {

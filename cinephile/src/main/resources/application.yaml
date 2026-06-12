@@ -3,14 +3,14 @@ spring:
     name: cinephile
 
   datasource:
-    url: jdbc:h2:mem:screenings
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ""
+    url: jdbc:postgresql://localhost:5432/cinephile
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: cinephile
 
   h2:
     console:
-      enabled: true
+      enabled: false
 
   jpa:
     hibernate:
@@ -19,7 +19,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    open-in-view: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 amc:
   api:
