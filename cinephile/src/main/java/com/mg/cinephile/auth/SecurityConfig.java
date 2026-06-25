@@ -16,9 +16,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
+    private final AuthRateLimitFilter authRateLimitFilter;
     private final JwtAuthFilter jwtAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(AuthRateLimitFilter authRateLimitFilter, JwtAuthFilter jwtAuthFilter) {
+        this.authRateLimitFilter = authRateLimitFilter;
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -49,6 +51,7 @@ public class SecurityConfig {
                     .anyRequest().authenticated()
 )
                 
+                .addFilterBefore(authRateLimitFilter, JwtAuthFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
